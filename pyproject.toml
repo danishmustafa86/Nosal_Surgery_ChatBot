@@ -1,0 +1,21 @@
+[project]
+name = "nosal-surgery-ai-chatbot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Danish Mustafa",email = "danishjajja86@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit (>=1.46.1,<2.0.0)",
+    "openai (>=1.95.1,<2.0.0)",
+    "bs4 (>=0.0.2,<0.0.3)",
+    "langdetect (>=1.0.9,<2.0.0)",
+    "html2text (>=2025.4.15,<2026.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
