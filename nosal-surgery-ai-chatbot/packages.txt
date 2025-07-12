@@ -1,0 +1,4 @@
+# System packages required for audio processing
+portaudio19-dev
+python3-pyaudio
+ffmpeg 
