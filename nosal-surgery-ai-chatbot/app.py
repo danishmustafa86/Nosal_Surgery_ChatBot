@@ -404,12 +404,52 @@ def format_related_resources(links, language="English"):
 @st.cache_data
 def load_and_process_html_content():
     try:
-        if os.path.exists("meko_clinic_rhinoplasty.html"):
-            with open("meko_clinic_rhinoplasty.html", "r", encoding="utf-8") as file:
-                html_content = file.read()
-        else:
+        # Try multiple possible paths for the HTML file
+        possible_paths = [
+            "meko_clinic_rhinoplasty.html",
+            "./meko_clinic_rhinoplasty.html",
+            os.path.join(os.getcwd(), "meko_clinic_rhinoplasty.html"),
+            os.path.join(os.path.dirname(__file__), "meko_clinic_rhinoplasty.html")
+        ]
+        
+        html_content = None
+        used_path = None
+        
+        for path in possible_paths:
+            try:
+                if os.path.exists(path):
+                    with open(path, "r", encoding="utf-8") as file:
+                        html_content = file.read()
+                        used_path = path
+                        break
+            except Exception as e:
+                continue
+        
+        if not html_content:
+            # Try to find the file in the current directory
+            try:
+                current_dir = os.getcwd()
+                files = os.listdir(current_dir)
+                html_files = [f for f in files if f.endswith('.html')]
+                
+                if html_files:
+                    # Use the first HTML file found
+                    html_file_path = os.path.join(current_dir, html_files[0])
+                    with open(html_file_path, "r", encoding="utf-8") as file:
+                        html_content = file.read()
+                        used_path = html_file_path
+                        st.info(f"📄 Found HTML file: {html_files[0]}")
+            except Exception as e:
+                pass
+        
+        if not html_content:
             st.warning("⚠️ HTML file 'meko_clinic_rhinoplasty.html' not found. Using fallback content.")
+            st.info("💡 This might be due to deployment environment differences. The app will still work with fallback content.")
             return get_fallback_content(), {}
+        
+        # Log which path was used (for debugging)
+        if used_path:
+            st.success(f"✅ Successfully loaded HTML content from: {used_path}")
         
         soup = BeautifulSoup(html_content, 'html.parser')
         
@@ -479,6 +519,7 @@ def load_and_process_html_content():
         
     except Exception as e:
         st.error(f"Error loading HTML content: {str(e)}")
+        st.info("💡 Using fallback content. The app will still function normally.")
         return get_fallback_content(), {}
 
 # Fallback content when HTML file is not available
