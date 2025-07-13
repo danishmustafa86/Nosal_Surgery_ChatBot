@@ -155,11 +155,80 @@ RELATED_RESOURCES = {
 # Initialize OpenAI client
 @st.cache_resource
 def init_openai_client():
-    api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY", "")
+    # Try multiple sources for API key
+    api_key = None
+    
+    # 1. Try environment variable
+    api_key = os.getenv("OPENAI_API_KEY")
+    
+    # 2. Try Streamlit secrets
     if not api_key:
-        st.error("⚠️ OpenAI API Key required")
+        try:
+            api_key = st.secrets.get("OPENAI_API_KEY", "")
+        except:
+            pass
+    
+    # 3. Try .env file (if dotenv is loaded)
+    if not api_key:
+        try:
+            load_dotenv()
+            api_key = os.getenv("OPENAI_API_KEY")
+        except:
+            pass
+    
+    # 4. Show configuration help if no key found
+    if not api_key:
+        st.error("⚠️ OpenAI API Key not found!")
+        st.markdown("""
+        **Please set up your API key in one of these ways:**
+        
+        1. **Create a `.env` file** in the project root:
+        ```
+        OPENAI_API_KEY=your-actual-api-key-here
+        ```
+        
+        2. **Set environment variable:**
+        ```bash
+        export OPENAI_API_KEY=your-actual-api-key-here
+        ```
+        
+        3. **Create `.streamlit/secrets.toml`:**
+        ```toml
+        OPENAI_API_KEY = "your-actual-api-key-here"
+        ```
+        
+        4. **For Streamlit Cloud:** Add to app secrets in the dashboard
+        """)
+        
+        # Show a text input for temporary testing
+        st.markdown("### 🔑 Temporary API Key Input (for testing)")
+        temp_key = st.text_input("Enter your OpenAI API key (temporary):", type="password")
+        if temp_key:
+            api_key = temp_key
+        else:
+            st.stop()
+    
+    # Validate API key format
+    if api_key and not api_key.startswith("sk-"):
+        st.error("❌ Invalid API key format. API key should start with 'sk-'")
         st.stop()
-    return OpenAI(api_key=api_key)
+    
+    try:
+        client = OpenAI(api_key=api_key)
+        # Test the connection
+        client.models.list()
+        return client
+    except Exception as e:
+        st.error(f"❌ Failed to initialize OpenAI client: {str(e)}")
+        st.markdown("""
+        **Common issues:**
+        - API key is invalid or expired
+        - Network connection issues
+        - OpenAI service is down
+        
+        **Please check your API key and try again.**
+        """)
+        st.stop()
 
 # Enhanced language detection
 def detect_language(text):
