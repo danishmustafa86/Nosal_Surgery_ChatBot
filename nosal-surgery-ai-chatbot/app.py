@@ -872,7 +872,12 @@ def transcribe_audio(audio_bytes):
         os.unlink(tmp_file_path)
         return transcription.strip()
     except Exception as e:
-        st.error(f"❌ Transcription error: {str(e)}")
+        # Handle short audio error gracefully
+        error_str = str(e)
+        if 'audio_too_short' in error_str or 'Minimum audio length' in error_str:
+            st.warning("⚠️ Audio too short. Please record a longer message (at least 0.5 seconds). Try again!")
+        else:
+            st.error(f"❌ Transcription error: {error_str}")
         return None
 
 # Enhanced speech generation with better quality
